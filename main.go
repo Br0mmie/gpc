@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -27,13 +28,45 @@ var apiFolders = []string{
 	"writes",
 }
 
+func make_folders(path string) {
+	if err := os.MkdirAll(path, os.ModePerm); err != nil {
+		log.Fatalf("[ERROR] Failed to create %s: %v", path, err)
+	}
+}
+
 func create_folders(path string) {
-	fmt.Println(path)
 	for _, name := range rootFolders {
 		full := filepath.Join(path, name)
-		if err := os.MkdirAll(full, os.ModePerm); err != nil {
-			log.Fatalf("[ERROR] Failed to create %s: %v", full, err)
-		}
+		make_folders(full)
+	}
+	for _, name := range internalFolders {
+		full := filepath.Join(path, "internal", name)
+		make_folders(full)
+	}
+
+	{
+		temp_path := filepath.Base(filepath.Clean(path))
+		fmt.Println("Cleaned path:", temp_path)
+		full := filepath.Join(path, "cmd", temp_path)
+		make_folders(full)
+	}
+
+	for _, name := range apiFolders {
+		full := filepath.Join(path, "api", name)
+		make_folders(full)
+	}
+}
+
+func make_go_project(path string) {
+	projectName := filepath.Base(filepath.Clean(path))
+	cmd := exec.Command("go", "mod", "init", projectName)
+
+	cmd.Dir = path
+
+	_, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Fatalf("[ERROR] Failed to create go project")
+		return
 	}
 }
 
@@ -53,6 +86,7 @@ func main() {
 			case "y", "":
 				// default case for yes
 				create_folders(wd)
+				make_go_project(wd)
 			case "n":
 				// Handle no case
 				fmt.Print("Enter project name: ")
@@ -60,13 +94,15 @@ func main() {
 					folderName := strings.TrimSpace(scanner.Text())
 					fmt.Println(folderName)
 					path := filepath.Join(wd, folderName)
-					fmt.Print("Path: ", path)
+					fmt.Println("Path: ", path)
 					create_folders(path)
+					make_go_project(path)
 				}
 				return
 			default:
 				// default case for yes
 				create_folders(wd)
+				make_go_project(wd)
 			}
 		}
 	}
