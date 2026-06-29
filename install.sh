@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo "This will erase any existing installation of gpc. Is this understood? "
+echo "This will erase any existing installation of GPC. Is this understood? "
 read -p "[y/n]: " answer
 
 if [[ "$answer" =~ ^[Yy]$ ]]; then
@@ -32,9 +32,9 @@ sudo chmod +x /usr/local/bin/gpc
 if [ -f "/usr/local/bin/gpc" ] && [ -x "/usr/local/bin/gpc" ]; then
 	echo "Removing temp directory $TMP_DIR"
 	sudo rm -rf "$TMP_DIR"
-    	echo "Foge has been installed!"
+    	echo "GPC has been installed!"
 else
-	echo "Error: Failed to install foge to /usr/local/bin/gpc"
+	echo "Error: Failed to install GPC to /usr/local/bin/gpc"
     	echo "Removing temp directory $TMP_DIR"
 	sudo rm -rf "$TMP_DIR"
     	exit 1
