@@ -11,20 +11,24 @@ import (
 	"strings"
 )
 
+// projectLayout defines the folder structure for a new Go project.
 type projectLayout struct {
 	root     []string
 	internal []string
 	api      []string
 }
 
+// defaultLayout is the standard project structure used when no custom layout is provided.
 var defaultLayout = projectLayout{
-	root:     []string{"api", "cmd", "internal"},
+	root:     []string{"api", "cmd", "internal", "logs"},
 	internal: []string{"auth", "http", "metrics", "models"},
 	api:      []string{"reads", "writes"},
 }
 
+// validName restricts project names to alphanumeric characters, hypens and underscores.
 var validName = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 
+// validateProjectName ensure the given name is safe to use as a directory and module name
 func validateProjectName(name string) error {
 	if name == "" {
 		return fmt.Errorf("Project name cannot be empty")
@@ -35,12 +39,14 @@ func validateProjectName(name string) error {
 	return nil
 }
 
+// makeFolders creates a directory and all necessary parts.
 func makeFolders(path string) {
 	if err := os.MkdirAll(path, os.ModePerm); err != nil {
 		log.Fatalf("[ERROR] Failed to create %s: %v", path, err)
 	}
 }
 
+// createFolders builds the full project directory structure at the given path.
 func createFolders(path string, layout projectLayout) {
 	for _, name := range layout.root {
 		full := filepath.Join(path, name)
@@ -59,6 +65,8 @@ func createFolders(path string, layout projectLayout) {
 	}
 }
 
+// checkProjectExists returns an error if a go.mod file already exists at the given path,
+// indicating the directory has already been initialised as a Go project.
 func checkProjectExists(path string) error {
 	goModPath := filepath.Join(path, "go.mod")
 	if _, err := os.Stat(goModPath); err == nil {
@@ -67,6 +75,8 @@ func checkProjectExists(path string) error {
 	return nil
 }
 
+// makeGoProject initialises a Go module at the given path using the directory name as the
+// module name
 func makeGoProject(path string) {
 	projectName := filepath.Base(filepath.Clean(path))
 
@@ -84,6 +94,22 @@ func makeGoProject(path string) {
 	}
 }
 
+func initializeAir() {
+	cmd := exec.Command("go", "install", "github.com/air-verse/air@latest")
+
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Fatalf("[ERROR] Failed to install air: %v\n%s", err, out)
+	}
+
+	cmd = exec.Command("air init")
+
+	out, err = cmd.CombinedOutput()
+	if err != nil {
+		log.Fatalf("[ERROR] Failed to install air: %v\n%s", err, out)
+	}
+}
+
 func main() {
 
 	if len(os.Args) == 1 {
@@ -98,11 +124,18 @@ func main() {
 			choice := strings.TrimSpace(scanner.Text())
 			switch choice {
 			case "y", "Y", "":
-				// default case for yes
 				createFolders(wd, defaultLayout)
 				makeGoProject(wd)
+				fmt.Println("Do you wanna install and initialize air? [y/N]")
+				air := strings.TrimSpace(scanner.Text())
+				switch air {
+				case "y", "Y":
+					initializeAir()
+				case "n", "N", "":
+					return
+				}
+
 			case "n":
-				// Handle no case
 				fmt.Print("Enter project name: ")
 				if scanner.Scan() {
 					folderName := strings.TrimSpace(scanner.Text())
@@ -114,10 +147,17 @@ func main() {
 					path := filepath.Join(wd, folderName)
 					createFolders(path, defaultLayout)
 					makeGoProject(path)
+					fmt.Println("Do you wanna install and initialize air? [y/N]")
+					air := strings.TrimSpace(scanner.Text())
+					switch air {
+					case "y", "Y":
+						initializeAir()
+					case "n", "N", "":
+						return
+					}
 				}
 				return
 			default:
-				// default case for yes
 				createFolders(wd, defaultLayout)
 				makeGoProject(wd)
 			}
