@@ -119,6 +119,8 @@ func initializeAir(path string) {
 	if err != nil {
 		log.Fatalf("[ERROR] Failed to initialize air: %v\n%s", err, out)
 	}
+
+	patchAirConfig(path)
 }
 
 func createMainFile(path string) {
@@ -136,6 +138,25 @@ func main() {
 
 	if err := os.WriteFile(mainPath, []byte(content), 0644); err != nil {
 		log.Fatalf("[ERROR] Failed to create main.go: %v", err)
+	}
+}
+
+func patchAirConfig(path string) {
+	projectName := filepath.Base(filepath.Clean(path))
+	configPath := filepath.Join(path, ".air.toml")
+
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		log.Fatalf("[ERROR] Failed to read .air.toml: %v", err)
+	}
+
+	oldCmd := `cmd = "go build -o ./tmp/main ."`
+	newCmd := fmt.Sprintf(`cmd = "go build -o ./tmp/main ./cmd/%s"`, projectName)
+
+	patched := strings.Replace(string(data), oldCmd, newCmd, 1)
+
+	if err := os.WriteFile(configPath, []byte(patched), 0644); err != nil {
+		log.Fatalf("[ERROR] Failed to patch .air.toml: %v", err)
 	}
 }
 
