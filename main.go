@@ -95,6 +95,7 @@ func makeGoProject(path string) {
 }
 
 func initializeAir(path string) {
+	log.Println("Installing air-verse from github.com/air-verse/air@latest")
 	cmd := exec.Command("go", "install", "github.com/air-verse/air@latest")
 
 	out, err := cmd.CombinedOutput()
@@ -102,12 +103,14 @@ func initializeAir(path string) {
 		log.Fatalf("[ERROR] Failed to install air: %v\n%s", err, out)
 	}
 
+	log.Println("Setting GOPATH to make air executable")
 	gopath, err := exec.Command("go", "env", "GOPATH").Output()
 	if err != nil {
 		log.Fatalf("[ERROR] Failed to get GOPATH: %v", err)
 	}
 	gopathBin := filepath.Join(strings.TrimSpace(string(gopath)), "bin")
 
+	log.Println("Initializing air")
 	cmd = exec.Command("air", "init")
 	cmd.Dir = path
 	cmd.Env = append(os.Environ(), "PATH="+os.Getenv("PATH")+":"+gopathBin)
