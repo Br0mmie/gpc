@@ -121,6 +121,24 @@ func initializeAir(path string) {
 	}
 }
 
+func createMainFile(path string) {
+	projectName := filepath.Base(filepath.Clean(path))
+	mainPath := filepath.Join(path, "cmd", projectName, "main.go")
+
+	content := `package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Hello, World!")
+}
+	`
+
+	if err := os.WriteFile(mainPath, []byte(content), 0644); err != nil {
+		log.Fatalf("[ERROR] Failed to create main.go: %v", err)
+	}
+}
+
 func main() {
 
 	if len(os.Args) == 1 {
@@ -137,6 +155,7 @@ func main() {
 			case "y", "Y", "":
 				createFolders(wd, defaultLayout)
 				makeGoProject(wd)
+				createMainFile(wd)
 				fmt.Println("Do you wanna install and initialize air? [y/N]")
 				if scanner.Scan() {
 					air := strings.TrimSpace(scanner.Text())
@@ -159,6 +178,7 @@ func main() {
 					path := filepath.Join(wd, folderName)
 					createFolders(path, defaultLayout)
 					makeGoProject(path)
+					createMainFile(path)
 					fmt.Println("Do you wanna install and initialize air? [y/N]")
 					if scanner.Scan() {
 						air := strings.TrimSpace(scanner.Text())
@@ -174,6 +194,7 @@ func main() {
 			default:
 				createFolders(wd, defaultLayout)
 				makeGoProject(wd)
+				createMainFile(wd)
 			}
 		}
 	} else {
