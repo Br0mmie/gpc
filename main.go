@@ -94,7 +94,7 @@ func makeGoProject(path string) {
 	}
 }
 
-func initializeAir() {
+func initializeAir(path string) {
 	cmd := exec.Command("go", "install", "github.com/air-verse/air@latest")
 
 	out, err := cmd.CombinedOutput()
@@ -102,17 +102,19 @@ func initializeAir() {
 		log.Fatalf("[ERROR] Failed to install air: %v\n%s", err, out)
 	}
 
-	cmd = exec.Command("export", "PATH=:\"$PATH:$(go env GOPATH)/bin\"")
+	gopath, err := exec.Command("go", "env", "GOPATH").Output()
 	if err != nil {
-		log.Fatalf("[ERROR] Failed to export air to $PATH: %v\n%s", err, out)
+		log.Fatalf("[ERROR] Failed to get GOPATH: %v", err)
 	}
-	out, err = cmd.CombinedOutput()
+	gopathBin := filepath.Join(strings.TrimSpace(string(gopath)), "bin")
 
-	cmd = exec.Command("air init")
+	cmd = exec.Command("air", "init")
+	cmd.Dir = path
+	cmd.Env = append(os.Environ(), "PATH="+os.Getenv("PATH")+":"+gopathBin)
 
 	out, err = cmd.CombinedOutput()
 	if err != nil {
-		log.Fatalf("[ERROR] Failed to install air: %v\n%s", err, out)
+		log.Fatalf("[ERROR] Failed to initialize air: %v\n%s", err, out)
 	}
 }
 
@@ -133,14 +135,15 @@ func main() {
 				createFolders(wd, defaultLayout)
 				makeGoProject(wd)
 				fmt.Println("Do you wanna install and initialize air? [y/N]")
-				air := strings.TrimSpace(scanner.Text())
-				switch air {
-				case "y", "Y":
-					initializeAir()
-				case "n", "N", "":
-					return
+				if scanner.Scan() {
+					air := strings.TrimSpace(scanner.Text())
+					switch air {
+					case "y", "Y":
+						initializeAir(wd)
+					case "n", "N", "":
+						return
+					}
 				}
-
 			case "n":
 				fmt.Print("Enter project name: ")
 				if scanner.Scan() {
@@ -154,12 +157,14 @@ func main() {
 					createFolders(path, defaultLayout)
 					makeGoProject(path)
 					fmt.Println("Do you wanna install and initialize air? [y/N]")
-					air := strings.TrimSpace(scanner.Text())
-					switch air {
-					case "y", "Y":
-						initializeAir()
-					case "n", "N", "":
-						return
+					if scanner.Scan() {
+						air := strings.TrimSpace(scanner.Text())
+						switch air {
+						case "y", "Y":
+							initializeAir(path)
+						case "n", "N", "":
+							return
+						}
 					}
 				}
 				return
