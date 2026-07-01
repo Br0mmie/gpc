@@ -102,6 +102,12 @@ func initializeAir() {
 		log.Fatalf("[ERROR] Failed to install air: %v\n%s", err, out)
 	}
 
+	cmd = exec.Command("export", "PATH=:\"$PATH:$(go env GOPATH)/bin\"")
+	if err != nil {
+		log.Fatalf("[ERROR] Failed to export air to $PATH: %v\n%s", err, out)
+	}
+	out, err = cmd.CombinedOutput()
+
 	cmd = exec.Command("air init")
 
 	out, err = cmd.CombinedOutput()
