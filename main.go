@@ -20,7 +20,7 @@ type projectLayout struct {
 
 // defaultLayout is the standard project structure used when no custom layout is provided.
 var defaultLayout = projectLayout{
-	root:     []string{"api", "cmd", "internal", "logs"},
+	root:     []string{"api", "bin", "cmd", "internal", "logs"},
 	internal: []string{"auth", "http", "metrics", "models"},
 	api:      []string{"reads", "writes"},
 }
@@ -151,9 +151,16 @@ func patchAirConfig(path string) {
 	}
 
 	oldCmd := `cmd = "go build -o ./tmp/main ."`
-	newCmd := fmt.Sprintf(`cmd = "go build -o ./tmp/main ./cmd/%s"`, projectName)
-
+	newCmd := fmt.Sprintf(`cmd = "go build -o ./bin/main ./cmd/%s"`, projectName)
 	patched := strings.Replace(string(data), oldCmd, newCmd, 1)
+
+	oldCmd2 := `bin = "./tmp/main"`
+	newCmd2 := `bin = "./bin/main"`
+	patched = strings.Replace(patched, oldCmd2, newCmd2, 1)
+
+	oldCmd3 := `entrypoint = ["./tmp/main"]`
+	newCmd3 := `entrypoint = ["./bin/main"]`
+	patched = strings.Replace(patched, oldCmd3, newCmd3, 1)
 
 	if err := os.WriteFile(configPath, []byte(patched), 0644); err != nil {
 		log.Fatalf("[ERROR] Failed to patch .air.toml: %v", err)
